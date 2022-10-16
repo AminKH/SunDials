@@ -1,5 +1,6 @@
 # SunDials
-Program to create table of coordinate (x,y) of shadow tip of gnomon, on sundial surface. Two methods was used. 
+Program to create table of coordinate (x,y) of shadow tip of gnomon, on sundial surface.
+Two methods was used. 
 1- Trigonometric method from chapter 58, Calculation of a Planar Sundial in Jean Meeus book, Astronomical Algorithms. 
 2- Vector Algebra method. In this method, I assumed that shadow tip is cast by tip of style or gnomon. Therefore, no mater is the shape style, shadow calculated by perpendicular line of style tip to surface of dial.
 3- Bifilar sundials calculations are based on book: Sonnenuhren by Beucher.
