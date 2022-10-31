@@ -26,3 +26,4 @@ These are type of sundials:
 The program is by Fortran. The result is saved in text file with, name of location and specs of dial and extension of .ASC. FreeCAD can use this kind of files.
 If You run FreeCADSundials.py in FreeCAD macro, the drawing of sundial will be created.
 I will be grateful if I have your comments.
+This my blog sundialcalculations.blogspot.com . Please send your comments to akhiabani57@gmail.com
