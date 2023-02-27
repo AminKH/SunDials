@@ -14,6 +14,7 @@ from PySide import QtGui, QtCore
 Gui.activateWorkbench("DraftWorkbench")
 Gui.activeDocument().activeView().viewTop()
 
+
 def drawLine(Points,dialType,lineColor,lineText):
      
     line = Draft.makeWire(Points, closed=False, face=False, support=None)                
@@ -59,17 +60,21 @@ try:
             Length = li[li.index('Length')+1]
             Hight = float(li[li.index('Hight')+1]) 
             angle = li[li.index('plate:')+1]
-            beta = float(li[li.index('Horizon:')+1])               
-           
-        elif(li[0] == 'Radius'): 
+            beta = float(li[li.index('Horizon:')+1])   
+
+        if(li[0] == 'Radius'): 
             radius = float(li[1])
 
-        elif(li[0] == 'Base'):           
+        if(li[0] == 'Base'):           
             X0 = float(li[li.index('X0')+1])
             Y0 = float(li[li.index('Y0')+1])                 
             Rod1 = float(li[li.index('Rod1')+1])
             Rod2 = float(li[li.index('Rod2')+1])
-            Angle = float(li[li.index('East_west')+1]) 
+            Angle = float(li[li.index('East_west')+1])       
+     
+        li = file.readline().rsplit()  
+        if(li[0] == 'Plate'):
+           plate = li   
 
         for line in file:
             li = line.rsplit()              
@@ -92,6 +97,7 @@ try:
                 x = float(li[0])
                 y = float(li[1])                           
                 Points.append(FreeCAD.Vector(x,y,0.0)) 
+                li = []
             elif(len(li) == 0):     
                 if(len(Points) >= 2) : 
                     drawLine(Points,DialType,lineColor,lineText) 
@@ -184,7 +190,9 @@ elif(DialType == "_Equatorial" or DialType == "_Equatorial_Vector"):
     text.ViewObject.FontSize = 1.5
     Draft.autogroup(text)  
     
-elif(DialType == "_Bifilar_Horizontal" or DialType == "_Bifilar_Vertical"):
+elif(DialType == "_Bifilar_Horizontal" or DialType == "_Bifilar_Vertical") or DialType == "_Bifilar_Inclined":
+    if(DialType == "_Bifilar_Inclined"):
+        Angle = 0.0
     circle = Draft.makeCircle(radius=0.5, placement=pl , face=False, support=None) 
     tanAngle = tan(Angle*pi/180.0)
     X1 = 15.0*Rod1
@@ -227,10 +235,11 @@ else:
             line.ViewObject.LineColor =  (0.0,1.0,1.0)
             Draft.autogroup(line) 
             if(x0 != 0.0) :
-                m = atan(y0/x0)
+                m = (atan(y0/x0))
             else:
-                m = 0.0
-            vec2 = FreeCAD.Vector(Hight*cos(m),Hight*sin(m), 0.0)
+                m = pi/2.0 
+                           
+            vec2 = FreeCAD.Vector(Hight*sin(m),-Hight*cos(m), 0.0)
             points = [FreeCAD.Vector(0.0, 0.0, 0.0), vec2]  
             line = Draft.makeWire(points, placement=pl, closed=False, face=False, support=None) 
             line.ViewObject.LineColor =  (0.0,1.0,1.0)    
@@ -268,6 +277,11 @@ else:
     text.ViewObject.FontSize = 2.5
     t = 'Gnomon Hight: '+ str(Hight) + ' , Style Length: ' + Length  + ' , Angle With Dial Plate: ' + angle
     text = Draft.make_text(t, placement=FreeCAD.Vector(x3,y3-15.0, 0.0))
+    text.ViewObject.FontSize = 2.5
+    Draft.autogroup(text)   
+
+    t = 'Plate '+ plate[1] + plate[2] + 'Plate '+ plate[3]+plate[4]
+    text = Draft.make_text(t, placement=FreeCAD.Vector(x3,y3-20.0, 0.0)) 
     text.ViewObject.FontSize = 2.5
     Draft.autogroup(text)   
 
