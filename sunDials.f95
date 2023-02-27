@@ -164,6 +164,9 @@ module SunDials
         call verticalGnom(Geo(2),PlaneDecline,GnomOrtho,Point0,GnomLength,Psi,beta)
     case(5)
          call PlanarSundialGnom(Geo(2),PlaneIncline,PlaneDecline,GnomOrtho,Point0,GnomLength,Psi,beta)
+     case(10 )
+         call  BifilarRods(0,Geo(2) ,PlaneIncline,Rlat,RDec, GnomOrtho , GnomLength , point0 )
+         Psi =0.D0
     case(11 )
          call  BifilarRods(1,Geo(2) ,PlaneDecline,Rlat,RDec, GnomOrtho , GnomLength , point0 )
          Psi =PlaneDecline
@@ -242,6 +245,8 @@ module SunDials
                     call verticalSunDial(Geo(2),PlaneDecline,GnomOrtho,RHangle1,RDelta(i),Point)
                 case(5)
                     call PlanarSundial(Geo(2),PlaneIncline,PlaneDecline,GnomOrtho,RHangle1,RDelta(i),Point)
+                case(10)
+                    call BifilarPoint(0,Rlat ,Rdec, GnomOrtho , GnomLength , RDelta(i), RHangle1 ,  point)
                 case(11)
                     call BifilarPoint(1,Rlat ,Rdec, GnomOrtho , GnomLength , RDelta(i), RHangle1 ,  point)
                 case(12)
@@ -286,7 +291,7 @@ module SunDials
                 endselect
                 if(dialType /= 0) then
                     Radius = dsqrt(point(1)*point(1)+point(2)*point(2))
-                    if(Radius > 20.D0*GnomOrtho .or. Point(1) <-99999.D0) then
+                    if(Radius >= 20.D0*GnomOrtho .or. Point(1) <=-99999.D0) then
                         point = 999999.D0
                     end if
                 end if
@@ -395,7 +400,7 @@ module SunDials
         If (Sin(RDec) == 0.D0) Then
             beta = 90.D0
         Else
-            beta = -DAtan(Tan(Rlat)/Sin(RDec)) / DEGRAD
+            beta = DAtan(Sin(RDec)/Tan(Rlat)) / DEGRAD
         End If
 
     end subroutine
@@ -572,8 +577,8 @@ module SunDials
             Call VecDotP(Hvec, SGvec, Arg, theta)
 
             Point0(1) = -dsign(Sgp * dSin(theta),SGvec(2))
-            Point0(2) = -dsign(Sgp * dCos(theta),SGvec(1))
-            beta = -90.D0 + theta / DEGRAD
+            Point0(2) = -(Sgp * dCos(theta))
+            beta = theta / DEGRAD
             if(Hvec(2) <0.D0) beta = -beta
         end if
 
@@ -664,16 +669,28 @@ module SunDials
     subroutine BifilarRods(DialType,Latitude ,PlateDec,Rlat,RDec, Rod1 , Rod2 , point0 )
         integer :: DialType
         real(kind=8) :: Latitude , PlateDec, Rlat, Rod1 , Rod2 ,RDec,TanRlat
+        real(kind=8) :: sinDec , cosDec
         real(kind=8), dimension(2) :: point0
 
         Rlat = Latitude * DEGRAD
         RDec = PlateDec*DEGRAD
         TanRlat = DTan(RLat)
+        sinDec = DSin(RDec)
+        cosDec =  DCos(RDec)
 
-        If (DialType == 1) Then
-              Rod2 = DAbs(Rod1 / DSin(Rlat))
-              point0(1) = -Rod2 * DSin(RDec) / TanRlat
-              point0(2) = -Rod1 * DCos(RDec) / TanRlat
+        If (DialType == 0) Then
+            Rod2 = DAbs(Rod1 / DSin(Rlat-RDec))
+            point0(1) =0.D0
+            point0(2) = -Rod1 / DTan(Rlat-RDec)
+         elseif (DialType == 1) then
+            Rod2 = DAbs(Rod1 / DSin(Rlat))
+            if(PlateDec == 0.D0) then
+                  point0(1) =0.D0
+                  point0(2) = -Rod1 / TanRlat
+            else
+                  Point0(1) = (Rod1 - Rod2) * sinDec * cosDec / TanRlat
+                  Point0(2) = -(Rod1 * cosDec * cosDec + Rod2 * sinDec * sinDec) / TanRlat
+            endif
          ElseIf (DialType == 2) Then
               Rod2 = DAbs(Rod1 / Dcos(Rlat))
               point0(1) = -Rod2 * Tan(RDec)
@@ -686,7 +703,7 @@ module SunDials
         integer :: DialType
         real(kind=8) ::Rlat , RDec, Rod1 , Rod2 , Rdelta, RH
         real(kind=8), dimension(2) :: point
-        real(kind=8) :: denumx, denumy
+        real(kind=8) :: denum, incident, Rang
         real(kind=8) :: pltSin,pltCos,delTan,haSin,haCos,DecSin, DecCos
 
         pltSin = DSin(Rlat)
@@ -697,16 +714,49 @@ module SunDials
         DecSin = DSin(RDec)
         DecCos = DCos(RDec)
 
-        denumx = pltSin * delTan + pltCos * haCos
 
-        If (DialType == 1) Then
-            point(1) = Rod2 * (haSin * DecCos + haCos * pltSin * DecSin - pltCos * delTan * DecSin) / denumx
-            point(2) = Rod1 * (-DecSin * haSin + pltSin * haCos * DecCos - pltCos * delTan * DecCos) / denumx
-        ElseIf (DialType == 2) Then
-            denumy = DecSin * haSin + pltSin * haCos * DecSin - pltCos * delTan * DecSin
-            point(1) = -Rod2 * (DecCos * haSin - pltSin * haSin * DecCos + pltCos * delTan * DecCos) / denumy
-            point(2) = -Rod1 * denumx / denumy
-        End If
+      If (DialType == 0) Then
+            incident = EqIncident(Rlat,RH, Rdelta,0.D0, Rdec)
+            if(incident<0.04D0) then
+                  point =999999.D0
+            else
+                  Rang = RLat-RDec
+                  denum = DSin(Rang) * delTan + DCos(Rang) * haCos
+                  point(1) = Rod2 * haSin  / denum
+                  point(2) = Rod1 * (DSin(Rang) * haCos - DCos(Rang) * delTan) / denum
+            end if
+      elseif(DialType == 1) then
+            incident = EqIncident(Rlat,RH, Rdelta,0.D0, 0.D0)
+            if(incident<0.04D0) then
+                  point =999999.D0
+            else
+                  denum = pltSin * delTan + pltCos * haCos
+                  if(RDec == 0.D0) then
+                        point(1) = Rod2 * haSin  / denum
+                        point(2) = Rod1 * (pltSin * haCos - pltCos * delTan) / denum
+                  else
+                        point(1) = Rod2 * (haSin * DecCos + haCos * pltSin * DecSin - pltCos * delTan * DecSin) / denum
+                        point(2) = Rod1 * (-DecSin * haSin + pltSin * haCos * DecCos - pltCos * delTan * DecCos) / denum
+                        point(1) = point(1) * DecCos - point(2) * DecSin
+                        point(2) = point(1) * DecSin + point(2) * DecCos
+                  end if
+            endif
+      ElseIf (DialType == 2) Then
+            incident = EqIncident(Rlat,RH, Rdelta,Rdec, PI/4.D0)
+            if(incident < 0.06D0) then
+                  point =999999.D0
+            else
+                  if(RDec == 0.D0) then
+                        denum = pltCos*delTan + pltSin*haCos
+                        point(1) = Rod2 * haSin  / denum
+                        point(2) = Rod1 * (pltSin*delTan - pltCos*haCos) / denum
+                  else
+                        denum = DecSin * haSin + pltSin * haCos * DecCos - pltCos * delTan * DecCos
+                        point(1) = Rod2 * (DecCos * haSin - pltSin * haCos * DecSin + pltCos * delTan * DecSin) / denum
+                        point(2) = -Rod1 * (pltSin*delTan + pltCos*haCos) / denum
+                  end if
+            endif
+      End If
 
     End subroutine
 

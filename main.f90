@@ -23,7 +23,7 @@ program SunDialsGraph
   integer :: UT_TT, IREF, JYear, numberofDays1
   integer :: numberofDays2,Cresp
   integer :: halfHouradded, intError
-  integer :: Iyear,Imonth,Iday
+  integer :: Iyear,Imonth,Iday, Kyear
   integer,dimension(3) :: today
 
   character(1) :: CalenSelect
@@ -140,6 +140,7 @@ program SunDialsGraph
     &      ' 3- For Horizontal dial(Polar Gnomon)' /&
     &      ' 4- For Vertical dial (Polar Gnomon)' /&
     &      ' 5- For Plane Dial(Polar Gnomon)' /&
+    &      ' 10- For Bilfilar_Inclined Plane' /&
     &      ' 11- For Bifilar Horizontal' /&
     &      ' 12- For Bifilar Vertical' /&
     &      ' 21- For Equatorial dial(Vector)' /&
@@ -157,25 +158,40 @@ program SunDialsGraph
     selectcase(dialSelect)
     case(1)
         DialTypeName = "_Equatorial"
+        PlaneDecline = 0.D0
     case(2)
         DialTypeName = "_Polar"
+        PlaneDecline = Geo(2)
+        PlaneIncline = 0.D0
     case(3)
         DialTypeName = "_Horizontal"
+        PlaneDecline = 0.D0
+        PlaneIncline = 0.D0
     case(4)
         DialTypeName = "_Vertical"
         PlaneIncline = 90.D0
     case(5)
         DialTypeName = "_Plane"
+    case(10)
+        DialTypeName = "_Bifilar_Inclined"
+        PlaneDecline = 0.D0
     case(11)
         DialTypeName = "_Bifilar_Horizontal"
+        PlaneIncline = 0.D0
     case(12)
         DialTypeName = "_Bifilar_Vertical"
+        PlaneIncline = 90.D0
     case(21)
         DialTypeName = "_Equatorial_Vector"
+        PlaneDecline = 0.D0
     case(22)
         DialTypeName = "_Polar_Vector"
+        PlaneDecline = 0.D0
+        PlaneIncline = Geo(2)
     case(23)
         DialTypeName = "_Horizontal_Vector"
+        PlaneDecline = 0.D0
+        PlaneIncline = 0.D0
     case(24)
         DialTypeName = "_Vertical_Vector"
         PlaneIncline = 90.D0
@@ -225,7 +241,7 @@ program SunDialsGraph
         write(*,*)
     endif
 
-    if (dialSelect == 5 .or. dialSelect == 25 ) then
+    if (dialSelect == 5 .or. dialSelect == 10 .or. dialSelect == 25 ) then
         write(*,*) " Enter Plane Inclination, That is the angle perpendicular to Plane and"
         write(*,*) " Zenith, for Horizontal Sundial = 0.0 and vertical Sundial = 90.0"
         write(*,'(A,$)') ' Please Enter: '
@@ -245,34 +261,40 @@ program SunDialsGraph
         read(*,'(F8.3)') GnomonIncline
     end if
 
+
 21   write(*,'(A)') ' Do You want to add Half an hour lines: '
      write(*,*)' 1- Enter 1 To Add Half an Hour'
      read(*,'(I1)') halfHouradded
 
+
      if(dialSelect >= 1 .and. dialSelect <4 .or. dialSelect >= 21 .and. dialSelect <= 23) then
         fileName = trim(adjustl(trim(LocationName))//"_"//adjustl(trim(dialTypeName))&
-      &  //"_G"//adjustl(trim(I2str(int(GnomOrtho))))//"_Y"//yearText//".ASC")
+      &  //"_G"//adjustl(trim(I2str(int(GnomOrtho))))//"_Y"//yearText//"_T"//adjustl(trim(I2str(timeKind)))//".ASC")
+     elseif(dialSelect == 10 ) then
+        fileName = trim(adjustl(trim(LocationName))//"_"//adjustl(trim(dialTypeName))&
+      &  //"_"//adjustl(trim(I2str(int(PlaneIncline))))//"_Rod1"//adjustl(trim(I2str(int(GnomOrtho))))&
+      & //"_Y"//yearText//"_T"//adjustl(trim(I2str(timeKind)))//".ASC")
      elseif(dialSelect == 11 .or. dialSelect ==12) then
         fileName = trim(adjustl(trim(LocationName))//"_"//adjustl(trim(dialTypeName))&
       &  //"_Dec"//adjustl(trim(I2str(int(PlaneDecline))))//"_Rod1"//adjustl(trim(I2str(int(GnomOrtho))))&
-      & //"_Y"//yearText//".ASC")
+      & //"_Y"//yearText//"_T"//adjustl(trim(I2str(timeKind)))//".ASC")
     elseif(dialSelect == 4 .or. dialSelect == 5 .or. dialSelect ==24) then
         fileName = trim(adjustl(trim(LocationName))//"_"//adjustl(trim(dialTypeName))&
       &  //"_De"//adjustl(trim(I2str(int(PlaneDecline))))//"_In"//&
       & adjustl(trim(I2str(int(PlaneIncline))))//"_G"//adjustl(trim(I2str(int(GnomOrtho))))&
-      & //"_Y"//yearText//".ASC")
+      & //"_Y"//yearText//"_T"//adjustl(trim(I2str(timeKind)))//".ASC")
     elseif(dialSelect == 25) then
         fileName = trim(adjustl(trim(LocationName))//"_"//adjustl(trim(dialTypeName))&
       &  //"_De"//adjustl(trim(I2str(int(PlaneDecline))))//"_In"//&
       & adjustl(trim(I2str(int(PlaneIncline))))//"_G"//adjustl(trim(I2str(int(GnomOrtho))))&
       &  //"_GDe"//adjustl(trim(I2str(int(GnomonDecline))))//"_GIn"//&
-      adjustl(trim(I2str(int(GnomonIncline))))//"_Y"//yearText//".ASC")
+      adjustl(trim(I2str(int(GnomonIncline))))//"_Y"//yearText//"_T"//adjustl(trim(I2str(timeKind)))//".ASC")
     elseif(dialSelect == 0) then
         fileName = trim(adjustl(trim(LocationName))//"_"//adjustl(trim(dialTypeName))&
-      &  //"_Y"//yearText//".ASC")
+      &  //"_Y"//yearText//"_T"//adjustl(trim(I2str(timeKind)))//".ASC")
     elseif(dialSelect == 31) then
          fileName = trim(adjustl(trim(LocationName))//"_"//adjustl(trim(dialTypeName))&
-      &  //"_R"//adjustl(trim(I2str(int(Radius))))//"_Y"//yearText//".ASC")
+      &  //"_R"//adjustl(trim(I2str(int(Radius))))//"_Y"//yearText//"_T"//adjustl(trim(I2str(timeKind)))//".ASC")
     end if
 
     open(unit = 10 ,file = fileName , form = 'formatted',status = 'unknown')
@@ -286,9 +308,9 @@ program SunDialsGraph
     &   ,2X,'Elevation'X,F7.2,2X,'TimeZone',X,F5.2)
 
     write(*,*)
-    write(*,'(A,A,F8.3,X,A,F7.3)')'Atmospheric properties:',' Pressure, milibar:', atmos(1),'Temperature C: ' , atmos(2)
+    write(*,'(A,A,F8.3,X,A,F7.3)')'Atmospheric properties:',' Pressure, milibar: ', atmos(1),'Temperature C: ' , atmos(2)
 
-    write(10,'(A,A,F8.3,X,A,F7.3)')'Atmospheric properties:',' Pressure, milibar:', atmos(1),'Temperature C: ' , atmos(2)
+    write(10,'(A,A,F8.3,X,A,F7.3)')'Atmospheric properties:',' Pressure, milibar: ', atmos(1),'Temperature C: ' , atmos(2)
     write(*,*)
 
     write(*,'(A,I4)')"Year: ",Iyear
@@ -314,21 +336,25 @@ program SunDialsGraph
         end if
     endif
 
-    if(DialTypeName == "_Bifilar_Horizontal" .or. DialTypeName == "_Bifilar_Vertical") then
+    if(DialTypeName =="_Bifilar_Inclined" .or. DialTypeName == "_Bifilar_Horizontal" .or. DialTypeName == "_Bifilar_Vertical") then
         write(*,'(5(A,X,F10.4,X))')"Base X0",Point0(1)," Base Y0" ,Point0(2), &
         & " Rod1",GnomOrtho," Rod2", styLength," Angle with East_west",Psi
          write(10,'(5(A,X,F10.4,X))')"Base X0",Point0(1)," Base Y0" ,Point0(2), &
         & " Rod1",GnomOrtho," Rod2", styLength," Angle with East_west",Psi
+        write(10,'(2(A,F12.6))')"Plate Declination:",PlaneDecline," Inclination: " ,PlaneIncline
     elseif(DialTypeName == "_Armillary") then
         write(*,'(A,F10.4)')"Radius ",Radius
         write(10,'(A,F10.4)')"Radius ",Radius
     else
-       write(*,'(4(A,X,F8.4,X),2(A,F8.4))')"Gnom X0",Point0(1)," Y0" ,Point0(2), &
+       write(*,'(4(A,X,F14.6,X),2(A,F14.6))')"Gnom X0",Point0(1)," Y0" ,Point0(2), &
     & " Hight",GnomOrtho," Length", styLength," Angle with dial plate",Psi, &
-        & " Angle with plate Horizon: ",beta
-        write(10,'(4(A,X,F8.4,X),2(A,F8.4))')"Gnom X0",Point0(1)," Y0" ,Point0(2), &
+        & " Angle with plate Vertical: ",beta
+      write(*,'(2(A,F12.6))')"Plate Declination:",PlaneDecline," Inclination" ,PlaneIncline
+
+        write(10,'(4(A,X,F14.6,X),2(A,F14.6))')"Gnom X0",Point0(1)," Y0" ,Point0(2), &
         & " Hight",GnomOrtho," Length", styLength," Angle with dial plate: ",Psi, &
         & " Angle with plate Horizon: ",beta
+        write(10,'(2(A,F12.6))')"Plate Declination:",PlaneDecline," Inclination: " ,PlaneIncline
     end if
 
     write(*,*)
@@ -338,9 +364,9 @@ program SunDialsGraph
 
     do i = 1,numberofDays1
         if(CalenSelect == "I" .or. CalenSelect == "i") then
-            call JD2IrCal(DJD(i),Iyear,Imonth,Iday,Hour)
+            call JD2IrCal(DJD(i),Kyear,Imonth,Iday,Hour)
         else
-            call JD2CAL(DJD(i),Iyear,Imonth,Iday,Hour)
+            call JD2CAL(DJD(i),Kyear,Imonth,Iday,Hour)
         end if
         write(10,'(A4,X,I2,X,I2)') "Date",Imonth , Iday
 

@@ -3829,7 +3829,7 @@ function EqIncident(Rlatitude,Rha, Rdelta, RsurfAzim, Rtilt)
 
     Cteta1 = dsin(Rlatitude)*(deltaSin*tiltCos+deltaCos*sAzimCos*haCos*tiltSin)
     Cteta2 = dcos(Rlatitude)*(deltaCos*haCos*tiltCos-deltaSin*sAzimCos*tiltSin)
-    EqIncident = dacos(Cteta1+Cteta2+deltaCos*sAzimSin*haSin*tiltSin)
+    EqIncident = (Cteta1+Cteta2+deltaCos*sAzimSin*haSin*tiltSin)
 
   end function
 
