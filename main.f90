@@ -679,6 +679,7 @@ program SunDialsGraph
         k2 = 0
 
         Do I = 1, 12
+
             write(*,*)
             IHour = 0
             if(CalenSelect == "I" .or. CalenSelect == "i") then
@@ -688,55 +689,68 @@ program SunDialsGraph
             end if
             write(*,'(X,A,I4,A,I2,A,I2)') "Date:       ",Iyear,'/',Imonth,'/',Iday
             call SolarTimes(DJD(i),Jdate,Geo,atmos,UT_TT,IREF,times,jds,angles)
-            IHour = int(times(2)- times(1)) + 1
+            if(times(1)== 0.D0) then
+                write(*,'(X,A)') "Time:       "
+                write(*,'(X,A)') "Azimuth:    "
+                write(*,'(X,A)') "Altitude:   "
+                write(*,'(X,A)') "Zenith:     "
+                write(*,'(X,A)') "R. Asension:"
+                write(*,'(X,A)') "Declination:"
+            elseif(times(1) == 99.D0) then
+                IHour = 11
+            else
+                IHour = int(times(2)- times(1)) + 1
+            end if
 
-            memSize = IHour*2 + 1
-            allocate(Time(memSize))
-            allocate(SunElev(memSize))
-            allocate(Azim(memSize))
-            allocate(Zenith(memSize))
-            allocate(Alfa(memSize))
-            allocate(Delta(memSize))
+            if(times(1) /= 0.D0) then
+                memSize = IHour*2 + 1
+                allocate(Time(memSize))
+                allocate(SunElev(memSize))
+                allocate(Azim(memSize))
+                allocate(Zenith(memSize))
+                allocate(Alfa(memSize))
+                allocate(Delta(memSize))
 
-            Do J = IHour, 1 ,-1
-                k1 = Ihour - J + 1
-                Time(k1) = Times(2) - J
-                TJD = jds(2) - J/24.D0
-                if(TJD < jds(1)) then
-                    TJD = jds(1)
-                    Time(k1) = times(1)
-                endif
+                Do J = IHour, 1 ,-1
+                    k1 = Ihour - J + 1
+                    Time(k1) = Times(2) - J
+                    TJD = jds(2) - J/24.D0
+                    if(TJD < jds(1) .and. times(1) /= 99.D0) then
+                        TJD = jds(1)
+                        Time(k1) = times(1)
+                    endif
 
-                call Solar_Position(TJD,Geo,Atmos,UT_TT, &
-                &    SunElev(k1),Zenith(k1),Azim(k1),Alfa(k1),Delta(k1),IREF)
+                    call Solar_Position(TJD,Geo,Atmos,UT_TT, &
+                    &    SunElev(k1),Zenith(k1),Azim(k1),Alfa(k1),Delta(k1),IREF)
 
-            End Do
+                End Do
 
-            Do J = 0 , Ihour
-                k2 = K1 + J + 1
-                Time(k2) = Times(2) + J
-                TJD = jds(2) + J/24.D0
-                if(TJD > jds(3)) then
-                    TJD = jds(3)
-                    Time(k2) = times(3)
-                endif
+                Do J = 0 , Ihour
+                    k2 = K1 + J + 1
+                    Time(k2) = Times(2) + J
+                    TJD = jds(2) + J/24.D0
+                    if(TJD > jds(3) .and. times(1) /= 99.D0) then
+                        TJD = jds(3)
+                        Time(k2) = times(3)
+                    endif
 
-                call Solar_Position(TJD,Geo,Atmos,UT_TT, &
-                &    SunElev(K2),Zenith(K2),Azim(k2),Alfa(k2),Delta(k2),IREF)
-            End Do
+                    call Solar_Position(TJD,Geo,Atmos,UT_TT, &
+                    &    SunElev(K2),Zenith(K2),Azim(k2),Alfa(k2),Delta(k2),IREF)
+                End Do
+                write(*,'(X,A,24(X,F10.6))') "Time:       ", Time(:)
+                write(*,'(X,A,24(X,F10.6))') "Azimuth:    ", Azim(:)
+                write(*,'(X,A,24(X,F10.6))') "Altitude:   ", SunElev(:)
+                write(*,'(X,A,24(X,F10.6))') "Zenith:     ", Zenith(:)
+                write(*,'(X,A,24(X,F10.6))') "R. Asension:", Alfa(:)
+                write(*,'(X,A,24(X,F10.6))') "Declination:", Delta(:)
+                deallocate(Time)
+                deallocate(SunElev)
+                deallocate(Azim)
+                deallocate(Zenith)
+                deallocate(Alfa)
+                deallocate(Delta)
+            end if
 
-            write(*,'(X,A,24(X,F10.6))') "Time:       ", Time(:)
-            write(*,'(X,A,24(X,F10.6))') "Azimuth:    ", Azim(:)
-            write(*,'(X,A,24(X,F10.6))') "Altitude:   ", SunElev(:)
-            write(*,'(X,A,24(X,F10.6))') "Zenith:     ", Zenith(:)
-            write(*,'(X,A,24(X,F10.6))') "R. Asension:", Alfa(:)
-            write(*,'(X,A,24(X,F10.6))') "Declination:", Delta(:)
-            deallocate(Time)
-            deallocate(SunElev)
-            deallocate(Azim)
-            deallocate(Zenith)
-            deallocate(Alfa)
-            deallocate(Delta)
         End Do
 
         write(*,*)
