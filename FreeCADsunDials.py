@@ -225,7 +225,7 @@ else:
     line.ViewObject.DrawStyle = u"Dashdot"    
     Draft.autogroup(line)        
        
-    if( X0 != "********" and  Y0 != "********"):       
+    if( X0[0] != "*" and  Y0[0] != "*"):       
         x0 = float(X0) 
         y0 = float(Y0) 
         if( y0 != 0.0)  :               
