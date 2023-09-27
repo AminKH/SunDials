@@ -157,6 +157,12 @@ module SunDials
       GnomLength = GnomOrtho
       Psi = 90.D0
       beta = 0.D0
+      PlaneDecline = 0.D0
+      if(dialType == 1 ) then
+            PlaneIncline = 90 - Geo(2) ! Equatorial Plane
+      elseif(dialType == 2) then
+            PlaneIncline = Geo(2) ! Polar Plane
+      endif
    case(3)
         call HorizontalGnom(Geo(2),GnomOrtho,Point0,GnomLength,Psi)
         beta = 90.D0
@@ -174,7 +180,9 @@ module SunDials
          call  BifilarRods(2,Geo(2) ,PlaneDecline,Rlat,RDec, GnomOrtho , GnomLength , point0 )
          Psi =PlaneDecline
     case(21) ! Equatorial Plane
-        call VectorGnomon(90.D0+Geo(2),0.D0,GnomOrtho,Geo(2),0.D0,Pvec,Hvec,GnomLength,Point0,psi,beta)
+        PlaneIncline = 90.D0+Geo(2)
+        PlaneDecline = 0.D0
+        call VectorGnomon(PlaneIncline,PlaneDecline,GnomOrtho,Geo(2),0.D0,Pvec,Hvec,GnomLength,Point0,psi,beta)
         call VectorGnomon(90.D0-Geo(2),180.D0,GnomOrtho,Geo(2),0.D0,Pvec1,Hvec1,GnomLength,Point0,psi,beta)
     case(22:25)
         if(dialType == 22 ) then
@@ -196,10 +204,8 @@ module SunDials
        &     Pvec,Hvec,GnomLength,Point0,psi,beta)
     end select
 
-     if(timeKind == 1) then
-       call RadHourAngle(Hours, RHangle)
-    elseif(timeKind == 3) then
-       call RadHourAngle(Hours, RHangle)
+    call RadHourAngle(Hours, RHangle)
+    if(timeKind == 3) then
        RHangle = RHangle + (Geo(1) - Geo(4)*15.D0)*DEGRAD
     end if
 
@@ -215,6 +221,18 @@ module SunDials
             Point = 999999.D0
             if(timeKind == 1 .or. timeKind == 3) then
                 RHangle1 = RHangle(j)
+            elseif(timeKind == 5) then
+                If(J<7) then
+                     Hours(j) =  times(i,2)-(7-J)*(times(i,2)-times(i,1))/6.D0
+                     RHangle1 = (Hours(j) - times(i,2))*15.D0*DEGRAD
+                elseif(J==7) then
+                      Hours(j) = times(i,2)
+                      RHangle1 = 0.D0
+                elseif(J>7) then
+                     Hours(j) = (J-7)*(times(i,3)-times(i,2))/6.D0 + times(i,2)
+                     RHangle1 = (Hours(j) - times(i,2))*15.D0*DEGRAD
+                End If
+
             else
                 RHangle1 = (Hours(j) - times(i,2))*15.D0*DEGRAD
             end if
@@ -222,7 +240,7 @@ module SunDials
             if(hours(j) >= times(i,1) .and. hours(j) <= times(i,3)) then
                 selectcase(dialType)
                 case(1)
-                    if(timeKind == 1 .or. timeKind == 3) then
+                    if(timeKind == 1 .or. timeKind == 3 .OR. timeKind == 5) then
                         if(I<=4) then
                               Call EquatorialPoint(GnomOrtho,RHangle1 ,Rdelta(i), point)
                         elseif( I >=6 ) then
@@ -253,7 +271,7 @@ module SunDials
                     call BifilarPoint(2,Rlat ,Rdec, GnomOrtho , GnomLength ,RDelta(i), RHangle1 ,  point)
                 case(21:25)
                     TJD = jds(I,2) + RHangle1/(24.D0*15.D0*DEGRAD)
-                    if(timeKind == 1 .or. timeKind == 3) then
+                    if(timeKind == 1 .or. timeKind == 3 .OR. timeKind == 5) then
                         if(dialType == 21) then
                             if( I<5 ) then
                               call Solar_Position(TJD,Geo1,Atmos,UT_TT,SunElev,Zenith,Azim,Alfa,Delta,IREF)
@@ -761,11 +779,11 @@ module SunDials
     End subroutine
 
 
-    subroutine ArmillaryPoint(Radius,Rdelta,point)
+    subroutine ArmillaryPoint(Radius,Rdelta,Rhangle,point)
         real(kind=8), dimension(2) :: Point
-        real(kind=8) :: Radius, Rdelta
+        real(kind=8) :: Radius, Rdelta, Rhangle
 
-        point(1) = 0.D0
+        point(1) = Radius*Rhangle
         point(2) = -Radius*dtan(Rdelta)
 
     end subroutine
@@ -802,15 +820,28 @@ module SunDials
             do J = 1 , 13
                 Point = 99999.9D0
                 RHangle1 = 0.D0
+
                 if(timeKind == 1 .or. timeKind == 3) then
                     RHangle1 = RHangle(j)
+                elseif(timeKind == 5) then
+                    If(J<7) then
+                         Hours(j) =  times(i,2)-(7-J)*(times(i,2)-times(i,1))/6.D0
+                         RHangle1 = (Hours(j) - times(i,2))*15.D0*DEGRAD
+                    elseif(J==7) then
+                          Hours(j) = times(i,2)
+                          RHangle1 = 0.D0
+                    elseif(J>7) then
+                         Hours(j) = (J-7)*(times(i,3)-times(i,2))/6.D0 + times(i,2)
+                         RHangle1 = (Hours(j) - times(i,2))*15.D0*DEGRAD
+                    End If
+
                 else
                     RHangle1 = (Hours(j) - times(i,2))*15.D0*DEGRAD
                 end if
+
                 time = hours(j)
                 if(time > times(i,1) .and. time < times(i,3)) then
-                    call ArmillaryPoint(Radius,Rdelta(i),point)
-                    Point(1) = Radius*RHangle1
+                    call ArmillaryPoint(Radius,Rdelta(i),RHangle1,point)
                 end if
                 x(i, J) = Point(1)
                 Y(i, J) = Point(2)

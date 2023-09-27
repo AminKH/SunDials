@@ -213,7 +213,8 @@ program SunDialsGraph
 20  format(' 1- For Local Solar Time : '/&
     &      ' 2- For Local Solar Time + Analema :' /&
     &      ' 3- For Solar Time considering Civil Time :' /&
-    &      ' 4- For Solar Time considering Civil Time + Analema :' /)
+    &      ' 4- For Solar Time considering Civil Time + Analema :' /&
+    &      ' 5- For Egyption Solar Times : ' /)
 
      write(*,'(A,$)') ' Please Select: '
      read(*,'(I1)') timeKind
@@ -261,11 +262,11 @@ program SunDialsGraph
         read(*,'(F8.3)') GnomonIncline
     end if
 
-
-21   write(*,'(A)') ' Do You want to add Half an hour lines: '
-     write(*,*)' 1- Enter 1 To Add Half an Hour'
-     read(*,'(I1)') halfHouradded
-
+ 21  if (timeKind /= 5) then
+         write(*,'(A)') ' Do You want to add Half an hour lines: '
+         write(*,*)' 1- Enter 1 To Add Half an Hour'
+         read(*,'(I1)') halfHouradded
+     end if
 
      if(dialSelect >= 1 .and. dialSelect <4 .or. dialSelect >= 21 .and. dialSelect <= 23) then
         fileName = trim(adjustl(trim(LocationName))//"_"//adjustl(trim(dialTypeName))&
@@ -326,13 +327,21 @@ program SunDialsGraph
         &        GnomOrtho,GnomonIncline,GnomonDecline,PlaneDecline,PlaneIncline, &
         &        dialSelect,1,Point0,styLength,Psi,beta,x,y)
         end if
-    elseif(timeKind >= 3) then
+    elseif(timeKind >= 3 .and. timeKind < 5) then
       if (dialSelect == 31) then
             call Armillary(Jyear,Geo,atmos,UT_TT,IREF,Hours,numberofDays1,DJD,3,Radius,x,y)
         else
             call SundialxyPoints(JYear,Geo,atmos,UT_TT,IREF,Hours,numberofDays1,DJD, &
         &        GnomOrtho,GnomonIncline,GnomonDecline,PlaneDecline,PlaneIncline, &
         &        dialSelect,3,Point0,styLength,Psi,beta,x,y)
+        end if
+    elseif( timeKind == 5) then
+      if (dialSelect == 31) then
+            call Armillary(Jyear,Geo,atmos,UT_TT,IREF,Hours,numberofDays1,DJD,5,Radius,x,y)
+        else
+            call SundialxyPoints(JYear,Geo,atmos,UT_TT,IREF,Hours,numberofDays1,DJD, &
+        &        GnomOrtho,GnomonIncline,GnomonDecline,PlaneDecline,PlaneIncline, &
+        &        dialSelect,5,Point0,styLength,Psi,beta,x,y)
         end if
     endif
 
@@ -345,6 +354,7 @@ program SunDialsGraph
     elseif(DialTypeName == "_Armillary") then
         write(*,'(A,F10.4)')"Radius ",Radius
         write(10,'(A,F10.4)')"Radius ",Radius
+        write(10,'(2(A,F12.6))')"Plate Declination:",PlaneDecline," Inclination: " ,PlaneIncline
     else
        write(*,'(4(A,X,F14.6,X),2(A,F14.6))')"Gnom X0",Point0(1)," Y0" ,Point0(2), &
     & " Hight",GnomOrtho," Length", styLength," Angle with dial plate",Psi, &
