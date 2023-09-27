@@ -49,10 +49,10 @@ try:
         li = file.readline().rsplit()       
         Pressure = li[li.index('milibar:')+1]
         Temperature = li[li.index('C:')+1] 
-
+        
         li = file.readline().rsplit()  
         year = int(li[1]) 
-
+       
         li = file.readline().rsplit()  
         if(li[0] == 'Gnom'):
             X0 = li[li.index('X0')+1]
@@ -74,7 +74,7 @@ try:
      
         li = file.readline().rsplit()  
         if(li[0] == 'Plate'):
-           plate = li   
+            plate = li         
 
         for line in file:
             li = line.rsplit()              
@@ -99,7 +99,7 @@ try:
                 Points.append(FreeCAD.Vector(x,y,0.0)) 
                 li = []
             elif(len(li) == 0):     
-                if(len(Points) >= 2) : 
+                if(len(Points) >= 2) :                     					
                     drawLine(Points,DialType,lineColor,lineText) 
                 Points = [] 
 
@@ -280,6 +280,7 @@ else:
     text.ViewObject.FontSize = 2.5
     Draft.autogroup(text)   
 
+if(plate[2] != '0.000000' and plate[4] != '0.000000') :
     t = 'Plate '+ plate[1] + plate[2] + 'Plate '+ plate[3]+plate[4]
     text = Draft.make_text(t, placement=FreeCAD.Vector(x3,y3-20.0, 0.0)) 
     text.ViewObject.FontSize = 2.5
