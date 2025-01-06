@@ -218,7 +218,7 @@ module SunDials
 
     do i = 1,NumberofDays
         do J = 1 , 13
-            Point = 999999.D0
+            Point = 99999.5D0
             if(timeKind == 1 .or. timeKind == 3) then
                 RHangle1 = RHangle(j)
             elseif(timeKind == 5) then
@@ -237,7 +237,7 @@ module SunDials
                 RHangle1 = (Hours(j) - times(i,2))*15.D0*DEGRAD
             end if
 
-            if(hours(j) >= times(i,1) .and. hours(j) <= times(i,3)) then
+           ! if(hours(j) >= times(i,1) .and. hours(j) <= times(i,3)) then
                 selectcase(dialType)
                 case(1)
                     if(timeKind == 1 .or. timeKind == 3 .OR. timeKind == 5) then
@@ -309,11 +309,11 @@ module SunDials
                 endselect
                 if(dialType /= 0) then
                     Radius = dsqrt(point(1)*point(1)+point(2)*point(2))
-                    if(Radius >= 20.D0*GnomOrtho .or. Point(1) <=-99999.D0) then
-                        point = 999999.D0
+                    if(Radius >= 18.D0*GnomOrtho .or. Point(1) <=-99999.D0) then
+                        point = 99999.5D0
                     end if
                 end if
-            end if
+           ! end if
             x(i, J) = Point(1)
             Y(i, J) = Point(2)
         enddo
